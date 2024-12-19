@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
+import {onMounted, ref, watch} from 'vue';
 
-const smallest = ref(0);
 const current = ref(0);
+const next = ref(0);
+const round = ref(0);
 const numbers = ref<{ num: number, order: number }[]>([])
 const originalNumbers = ref<{ num: number, order: number }[]>([]);
 const started = ref(false);
@@ -23,7 +24,13 @@ function generateRandomNumbers() {
 
     originalNumbers.value = numbers.value.map(n => ({ ...n }));
 }
+
 generateRandomNumbers()
+
+onMounted(()=>{
+  reset()
+})
+
 
 async function sleep(ms: number) {
     return new Promise<void>((resolve) => {
@@ -44,8 +51,9 @@ async function waitUntil(condition: () => boolean) {
 
 function reset() {
     numbers.value = originalNumbers.value.map(n => ({ ...n }));
-    smallest.value = 0;
     current.value = 0;
+    next.value = 0;
+    round.value = 0;
     started.value = false;
     paused.value = false;
     stepByStep.value = false;
@@ -81,73 +89,58 @@ function onResetClicked() {
     }
 }
 
+function isCompare(n: number, current: number): boolean {
+  if (n == current || n == current + 1) {
+    return true;
+  }
+  return false;
+}
+async function bubbleSort(){
 
+  // current = j; smallest = remain = i
+  if (started.value) {
+    return;
+  }
+  started.value = true;
 
-async function selectionSort() {
-    if (started.value) {
-        return;
-    }
-    started.value = true;
-
-    for (let i = 0; i < numbers.value.length; i++) {
-        smallest.value = i;
-        for (let j = i; j < numbers.value.length; j++) {
-            if (j !== i) {
-                await breakPoint();
-                if (needReset.value) {
-                    reset()
-                    return;
-                }
-            }
-
-            current.value = j;
-            if (numbers.value[j].num < numbers.value[smallest.value].num) {
-                await breakPoint();
-                if (needReset.value) {
-                    reset()
-                    return;
-                }
-
-                if (!stepByStep.value) {
-                    await sleep(500);
-                }
-
-                smallest.value = j;
-            }
-
-            stepsCount.value++;
-            await sleep(500);
-        }
-
-        await breakPoint();
-        if (needReset.value) {
-            reset()
-            return;
-        }
+  for (let i = 0; i < numbers.value.length - 1; i++) {
+    round.value = i;
+    for (let j = 0; j < numbers.value.length - 1 - i; j++) {
+      current.value = numbers.value[j].order
+      // array swap
+      if (numbers.value[j].num > numbers.value[j + 1].num) {
 
         // swap order for animation
-        [numbers.value[i].order, numbers.value[smallest.value].order] = [numbers.value[smallest.value].order, numbers.value[i].order];
+        [numbers.value[j].order, numbers.value[j + 1].order] = [numbers.value[j + 1].order, numbers.value[j].order];
 
-        await sleep(500);
-
+        await sleep(125);
         // disable animation
         showSwapAnimation.value = false;
 
-        // swap
-        [numbers.value[i], numbers.value[smallest.value]] = [numbers.value[smallest.value], numbers.value[i]];
-        await sleep(125); // wait for vue to update
-
+        [numbers.value[j], numbers.value[j + 1]] = [numbers.value[j + 1], numbers.value[j]];
+        await sleep(875); // wait for vue to update
         // enable animation
         showSwapAnimation.value = true;
 
         await breakPoint();
         if (needReset.value) {
-            reset()
-            return;
+          reset()
+          return;
         }
+      }else{
+        await sleep(1000)
+        await breakPoint();
+        if (needReset.value) {
+          reset()
+          return;
+        }
+      }
+      current.value = numbers.value[j].order
+      stepsCount.value++;
     }
-
-    started.value = false;
+    await sleep(1000);
+  }
+  started.value = false;
 }
 
 </script>
@@ -155,27 +148,23 @@ async function selectionSort() {
 <template>
     <div style="text-align: initial;" class="flex gap-2">
         <div>
-            <div :style="{ transform: `translateY(${current * 3}rem)` }"
+            <div :style="{ transform: `translateY(${round * 3}rem)` }"
                 class="items w-25 transition-transform duration-250ms ease-out">
-                Current: {{ numbers[current].num }}</div>
-        </div>
-        <div>
-            <div :style="{ transform: `translateY(${smallest * 3}rem)` }"
-                class="items w-30 transition-transform duration-250ms ease-out">
-                Smallest: {{ numbers[smallest].num }}</div>
+                Round: {{ round }}</div>
         </div>
         <div class="h-120">
             <div v-for="n in numbers" :style="{ width: `${n.num / 4}rem`, transform: `translateY(${n.order * 3}rem)` }"
                 :class="{
                     'transition-transform duration-250ms ease-out': showSwapAnimation,
-                }" class="absolute items">
+                    'isComparison': isCompare(n.order, current),
+                }" class="absolute items" :id="String(n.order)">
                 {{ n.num }}</div>
         </div>
     </div>
     <div class="h-1px bg-black mb-4 @dark:bg-white"></div>
     <div class="flex justify-center gap-4">
         <div class="items">Steps count: {{ stepsCount }}</div>
-        <div @click="selectionSort" class="items" v-if="!started">Start Sorting</div>
+        <div @click="bubbleSort" class="items" v-if="!started">Start Sorting</div>
         <div @click="generateRandomNumbers();reset()" class="items" v-if="!started">Regenerate</div>
         <div @click="pauseOrResume" class="items" v-if="started">{{ paused ? 'Resume' : 'Pause' }}</div>
         <div @click="stepByStep = true; paused = false" class="items" v-if="paused">Next step</div>
@@ -184,6 +173,11 @@ async function selectionSort() {
 </template>
 
 <style scoped>
+.isComparison {
+  border-width: 2px !important;
+  border-color: #67c23a !important;
+}
+
 .items {
     --at-apply: h-8 bg-white flex items-center px-4 text-black b-1 b-solid b-black;
 }
