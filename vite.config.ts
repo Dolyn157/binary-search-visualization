@@ -4,6 +4,7 @@ import unocss from 'unocss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/binary-search-visualization/',
   plugins: [
     vue(),
     unocss()
