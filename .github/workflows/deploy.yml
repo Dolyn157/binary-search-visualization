@@ -21,7 +21,7 @@ jobs:
           node-version: 22.13
           cache: pnpm
 
-      - run: pnpm install
+      - run: pnpm install --only-built-dependencies
       - run: pnpm build
 
       - uses: peaceiris/actions-gh-pages@v4
