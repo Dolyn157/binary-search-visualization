@@ -5,6 +5,9 @@ import BinaryInstru from "./BinaryInstru.vue";
 
 const array = ref<number[]>([1,3,10,12,35,41,50,54,59,66,88,92,108, 109])
 
+const onResize = async () => {
+  await handleResize()
+}
 const point1 = ref({x: 110, y: 110})
 const point2 = ref({x: 0, y: 0})
 const point3 = ref({x: 0, y: 0})
@@ -17,13 +20,15 @@ let rightIndex: number = array.value.length - 1
 let mid: number = Math.floor((array.value.length - 1) / 2)
 const goal = ref<number>(92)
 
+
+
 onMounted( async() => {
   await handleResize()
-  window.addEventListener('resize', async () => {await handleResize()})
+  window.addEventListener('resize', onResize)
 })
 
 onBeforeUnmount(async() =>{
-  window.removeEventListener('resize', async() => await handleResize())
+  window.removeEventListener('resize', onResize)
 })
 
 async function handleResize () {

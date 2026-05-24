@@ -1,3 +1,9 @@
+# 如何运行该项目？
+    pnpm install
+    （安装依赖，请确认本地运行的pnpm版本在 10.x 以上
+    pnpm dev
+    (开启开发环境)
+
 # Vue 3 + TypeScript + Vite
 
 This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.

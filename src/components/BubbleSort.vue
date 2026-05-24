@@ -1,17 +1,24 @@
 <script lang="ts" setup>
-import {onMounted, ref, watch} from 'vue';
+import {onMounted, ref} from 'vue';
+import { useSortControls } from '../composables/useSortControls';
 
 const current = ref(0);
-const next = ref(0);
 const round = ref(0);
 const numbers = ref<{ num: number, order: number }[]>([])
 const originalNumbers = ref<{ num: number, order: number }[]>([]);
-const started = ref(false);
-const paused = ref(false);
-const stepByStep = ref(false);
 const showSwapAnimation = ref(true);
-const needReset = ref(false);
-const stepsCount = ref(0);
+const {
+    started,
+    paused,
+    stepByStep,
+    needReset,
+    stepsCount,
+    sleep,
+    resetControls,
+    pauseOrResume,
+    breakPoint,
+    onResetClicked,
+} = useSortControls(reset);
 
 function generateRandomNumbers() {
     numbers.value = [];
@@ -32,61 +39,12 @@ onMounted(()=>{
 })
 
 
-async function sleep(ms: number) {
-    return new Promise<void>((resolve) => {
-        setTimeout(resolve, ms);
-    });
-}
-
-async function waitUntil(condition: () => boolean) {
-    return new Promise<void>((resolve) => {
-        const handle = watch([condition], (val) => {
-            if (val) {
-                handle.stop();
-                resolve();
-            }
-        });
-    });
-}
-
 function reset() {
     numbers.value = originalNumbers.value.map(n => ({ ...n }));
     current.value = 0;
-    next.value = 0;
     round.value = 0;
-    started.value = false;
-    paused.value = false;
-    stepByStep.value = false;
     showSwapAnimation.value = true;
-    needReset.value = false;
-    stepsCount.value = 0;
-}
-
-async function pauseOrResume() {
-    if (paused.value) {
-        stepByStep.value = false;
-        console.log('resume');
-    }
-
-    paused.value = !paused.value;
-}
-
-async function breakPoint() {
-    if (paused.value) {
-        await waitUntil(() => !paused.value);
-    }
-    if (stepByStep.value) {
-        paused.value = true;
-    }
-}
-
-function onResetClicked() {
-    if (started.value) {
-        needReset.value = true;
-        paused.value = false;
-    } else {
-        reset();
-    }
+    resetControls();
 }
 
 function isCompare(n: number, current: number): boolean {
